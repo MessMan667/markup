@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+
+<!--https://stackoverflow.com/questions/43806515/position-svg-elements-over-an-image-->
+    <style>
+        body {
+               font-family: Verdana, Geneva, sans-serif;
+        }
+        
+        p {
+            text-align: center;
+            color: #777
+        }
+        
+        svg {
+            border: 1px solid #333;
+            display: block;
+            margin: 0;
+            cursor: auto;
+        }
+        
+        line,
+        path,
+        polygon {
+            stroke: crimson;
+        }
+        
+        path {
+            cursor: move;
+        }
+        
+        circle {
+            fill: none;
+            cursor: alias;
+        }
+
+        .img-overlay-wrap {
+         position: relative;
+         display: inline-block; /* <= shrinks container to image size */
+         transition: transform 150ms ease-in-out;
+        }
+
+        .img-overlay-wrap img { /* <= optional, for responsiveness */
+        display: block;
+        max-width: 100%;
+        height: auto;
+        }
+
+        .img-overlay-wrap svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        }
+
+      
+
+
+    </style>
+
+
+</head>
+
+<body>
+
+
+    <div class="img-overlay-wrap" id='Svg_cont' position="relative">
+    <img src ="C:\Users\zzlippch\Pictures\2020-10-05 15_59_26-Clipboard.png"  width="500" height="500" />
+    </div>
+
+    <button id="read" onclick="selectBTNactive()">select</button>
+    <button id="update" onclick="transBTNactive()">translate</button>
+    <button id="create" onclick="addBTNactive()">create</button>
+   <!--<button is="delete" onclick="delBTNactive()">remove</button>--> 
+    <button is="out" onclick="outputJson()">output</button>
+
+    <p id="demo"></p>
+
+    <script>
+        var SVGLink_NS = 'http://www.w3.org/1999/xlink';
+        var SVG_NS = 'http://www.w3.org/2000/svg';
+        var svg = document.querySelector("svg");
+        var deg = 180 / Math.PI;
+        var rotating = false;
+        var dragging = false;
+
+        var impact = {
+            x: 0,
+            y: 0
+        };
+        var m = { //mouse
+            x: 0,
+            y: 0
+        };
+        delta = {
+            x: 0,
+            y: 0
+        };
+        var ry = []; // elements array
+        var objectsRy = []; //obj array
+
+
+        var x = 800;
+        var y = 600;
+        // createSVG, Set ATRS
+        var svg = document.createElementNS(SVG_NS, 'svg');
+
+        var pattern = document.createElement('pattern');
+        pattern.setAttribute('x', '0');
+        pattern.setAttribute('y', '0');
+        pattern.setAttribute('patternUnits','userSpaceOnUse');
+        pattern.setAttribute('height','1');
+        pattern.setAttribute('width','1');
+
+        svg.setAttribute('width', 'auto');
+        svg.setAttribute('height', 'auto');
+        svg.setAttribute('onclick', 'showCoords(event)');
+        svg.setAttribute('position','absolute');
+        var ctn = document.getElementById('Svg_cont');
+        ctn.appendChild(svg);
+        svg.appendChild(pattern);
+  
+
+
+
+
+
+
+        // svg.setAttribute('xlink:href', "https://www.w3schools.com/w3images/chicago.jpg");
+
+        //btn cursor functions 
+
+        function selectBTNactive() {
+            svg.setAttribute('onclick', 'showCoords(event)');
+            var all = document.getElementsByTagName("g");
+            var i;
+            for (i = 0; i < all.length; i++) {
+                var o = all[i];
+                o.setAttribute('onclick', "alert('item:'+this.id +' x:'+x +' y:'+y)");// add dialog trigger
+                document.getElementById("demo").innerHTML = o.id;
+            }
+        } //Done
+        //done  --debug
+        function showCoords(event) {
+            x = event.clientX;
+            y = event.clientY;
+            var coords = "X coords: " + x + ", Y coords: " + y;
+            document.getElementById("demo").innerHTML = coords;
+            return [x, y];
+        }
+
+
+
+        function addBTNactive() {
+            svg.setAttribute('onclick', 'addOnclick(event,id)');
+        }
+
+        function addOnclick(event) {
+
+            if (x > 0) {
+                x = event.clientX;
+                y = event.clientY;
+            } else {
+                return;
+            }
+
+            var id = 'obj' + Date.now();
+            var markerPath = {
+                properties: {
+                    id: id,
+                    d: d = "m34.90631,29.8692c-4.69315,0 -8.49798,4.06349 -8.49798,9.07569c0,5.01341 8.49798,21.92809 8.49798,21.92809s8.49798,-16.91467 8.49798,-21.92809c0,-5.0122 -3.8037,-9.07569 -8.49798,-9.07569zm0,13.41266c-2.24233,0 -4.0609,-1.94099 -4.0609,-4.33697s1.81857,-4.33697 4.0609,-4.33697s4.0609,1.9422 4.0609,4.33697s-1.81857,4.33697 -4.0609,4.33697z",
+                    fill: 'crimson'
+                },
+                //parent: this.g,
+                tagName: 'path',
+                pos: {
+                    x: x - 44,
+                    y: y - 70
+                }
+            }
+            objectsRy.push(markerPath);
+            var i = objectsRy.length - 1;
+            var el = new Element(objectsRy[i], i);
+            el.update();
+            ry.push(el)
+
+        }
+
+
+        function delBTNactive() {
+            svg.setAttribute('onclick', '')
+            var all = document.getElementsByTagName("g");
+            var i;
+            for (i = 0; i < all.length; i++) {
+                var o = all[i];
+                o.setAttribute('onclick', 'remSelected(' + o.id + ')');
+                document.getElementById("demo").innerHTML = o.id;
+            }
+        }
+/*
+        function remSelected(e) {
+
+            var child = document.getElementById(e);
+            var parent = child.parentNode;
+            parent.removeChild(child);
+            objectsRy.splice(e - 1, 1);
+            ry.splice(e - 1, 1);
+            objectsRy.filter(val => val);
+            ry.filter(val => val);
+
+        };
+*/
+
+
+        function transBTNactive() {
+            svg.setAttribute('onclick', '')
+            elemTranslate();
+        }
+
+        // add new SVG elem
+
+        function elemTranslate() {
+            //keep
+            svg.addEventListener("mouseup", function(evt) {
+                rotating = false;
+                dragging = false;
+            }, false);
+            //keep
+            svg.addEventListener("mouseleave", function(evt) {
+                rotating = false;
+                dragging = false;
+            }, false);
+            //keep
+            svg.addEventListener("mousemove", function(evt) {
+                m = oMousePos(svg, evt);
+
+                if (dragging) {
+                    var index = dragging - 1;
+                    ry[index].o.x = m.x + delta.x;
+                    ry[index].o.y = m.y + delta.y;
+                    ry[index].update();
+                }
+                //rem
+                if (rotating) {
+                    var index = rotating - 1;
+                    console.log(ry[index].A);
+                    ry[index].a = Math.atan2(ry[index].o.y - m.y, ry[index].o.x - m.x) - ry[index].A;
+                    ry[index].update();
+                }
+            }, false);
+
+        }
+
+
+        //wrapinbox
+        function Element(o, index) {
+            this.g = document.createElementNS(SVG_NS, 'g');
+            this.g.setAttributeNS(null, 'id', index);
+            svg.appendChild(this.g);
+
+            o.parent = this.g;
+
+            this.el = drawElement(o);
+            this.a = 0;
+            this.tagName = o.tagName;
+            this.elRect = this.el.getBoundingClientRect();
+            this.svgRect = svg.getBoundingClientRect();
+            this.Left = this.elRect.left - this.svgRect.left;
+            this.Right = this.elRect.right - this.svgRect.left;
+            this.Top = this.elRect.top - this.svgRect.top;
+            this.Bottom = this.elRect.bottom - this.svgRect.top;
+
+            this.LT = {
+                x: this.Left,
+                y: this.Top
+            };
+            this.RT = {
+                x: this.Right,
+                y: this.Top
+            };
+            this.LB = {
+                x: this.Left,
+                y: this.Bottom
+            };
+            this.RB = {
+                x: this.Right,
+                y: this.Bottom
+            };
+            //rotate circle
+            this.c = {
+                x: 0, //(this.elRect.width / 2) + this.Left,
+                y: 0 //(this.elRect.height / 2) + this.Top
+            };
+            this.o = {
+                x: o.pos.x,
+                y: o.pos.y
+            };
+
+            this.A = Math.atan2(this.elRect.height / 2, this.elRect.width / 2);
+            console.log(this.A);
+            this.pointsValue = function() { // points for the box
+                    return (this.Left + "," + this.Top + " " + this.Right + "," + this.Top + " " + this.Right + "," + this.Bottom + " " + this.Left + "," + this.Bottom + " " + this.Left + "," + this.Top);
+                }
+                //selectionbox
+            var box = {
+                properties: {
+                    points: this.pointsValue(),
+                    fill: 'none',
+                    stroke: 'none', //invisible
+                    'stroke-dasharray': '5,5'
+                },
+                parent: this.g,
+                tagName: 'polyline'
+            }
+            this.box = drawElement(box);
+
+            var leftTop = {
+                properties: {
+                    cx: this.LT.x,
+                    cy: this.LT.y,
+                    r: 6,
+                    fill: "blue"
+                },
+                parent: this.g,
+                tagName: 'circle'
+            }
+
+            this.lt = drawElement(leftTop);
+
+            this.update = function() {
+                var transf = 'translate(' + this.o.x + ', ' + this.o.y + ')' + ' rotate(' + (this.a * deg) + ')';
+                this.el.setAttributeNS(null, 'transform', transf);
+                this.box.setAttributeNS(null, 'transform', transf);
+                this.lt.setAttributeNS(null, 'transform', transf);
+            }
+
+        }
+
+        for (var i = 0; i < objectsRy.length; i++) {
+            var el = new Element(objectsRy[i], i + 1);
+            el.update();
+            ry.push(el)
+        }
+
+        // EVENTS
+        //keep
+        svg.addEventListener("mousedown", function(evt) {
+
+            var index = parseInt(evt.target.parentElement.id);
+            if (isNaN(index)) {
+                return;
+            }
+            if (evt.target.tagName == ry[index].tagName) {
+                dragging = index + 1;
+                impact = oMousePos(svg, evt);
+                delta.x = ry[index].o.x - impact.x;
+                delta.y = ry[index].o.y - impact.y;
+            }
+
+            if (evt.target.tagName == "circle") {
+                rotating = parseInt(evt.target.parentElement.id);
+            }
+
+        }, false);
+
+
+
+        // HELPERS
+        //keep
+        function oMousePos(svg, evt) {
+            var ClientRect = svg.getBoundingClientRect();
+            return { //objeto
+                x: Math.round(evt.clientX - ClientRect.left),
+                y: Math.round(evt.clientY - ClientRect.top)
+            }
+        }
+
+        function drawElement(o) {
+
+            var el = document.createElementNS(SVG_NS, o.tagName);
+            for (var name in o.properties) {
+                if (o.properties.hasOwnProperty(name)) {
+                    el.setAttributeNS(null, name, o.properties[name]);
+                }
+            }
+            o.parent.appendChild(el);
+            return el;
+        }
+
+        function outputJson() {
+            document.getElementById("demo").innerHTML = JSON.stringify(objectsRy, ["properties", "fill", "pos", "x", "y", "parent"]);
+            //  [{"properties":{"d","fill","tagName""pos","x","y","parent"}] 
+        }
+    </script>
+
+</body>
+
+</html>
